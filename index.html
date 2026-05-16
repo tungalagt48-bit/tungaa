@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>МедФин AI — Эмнэлгийн Санхүүгийн Туслах</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,300&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #0a0f1e;
+      --surface: #111827;
+      --surface2: #1a2235;
+      --border: #1e2d45;
+      --accent: #00e5ff;
+      --accent2: #7c3aed;
+      --accent3: #10b981;
+      --text: #e2e8f0;
+      --text-muted: #64748b;
+      --danger: #ef4444;
+      --warning: #f59e0b;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* BG Grid */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(0,229,255,0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(0,229,255,0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* Glow blobs */
+    .blob {
+      position: fixed;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.12;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .blob-1 { width: 500px; height: 500px; background: var(--accent2); top: -100px; left: -100px; }
+    .blob-2 { width: 400px; height: 400px; background: var(--accent); bottom: -100px; right: -100px; }
+
+    /* NAV */
+    nav {
+      position: sticky; top: 0;
+      z-index: 100;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 40px;
+      background: rgba(10,15,30,0.85);
+      backdrop-filter: blur(20px);
+      border-bottom: 1px solid var(--border);
+    }
+    .logo {
+      font-family: 'Syne', sans-serif;
+      font-size: 22px; font-weight: 800;
+      letter-spacing: -0.5px;
+      color: var(--text);
+    }
+    .logo span { color: var(--accent); }
+    .nav-badge {
+      background: rgba(0,229,255,0.1);
+      border: 1px solid rgba(0,229,255,0.3);
+      color: var(--accent);
+      font-size: 11px; font-weight: 600;
+      padding: 4px 10px; border-radius: 20px;
+      letter-spacing: 1px; text-transform: uppercase;
+    }
+
+    /* HERO */
+    .hero {
+      position: relative; z-index: 1;
+      text-align: center;
+      padding: 80px 20px 60px;
+    }
+    .hero-tag {
+      display: inline-block;
+      background: rgba(124,58,237,0.15);
+      border: 1px solid rgba(124,58,237,0.4);
+      color: #a78bfa;
+      font-size: 12px; font-weight: 600;
+      padding: 6px 16px; border-radius: 20px;
+      letter-spacing: 1.5px; text-transform: uppercase;
+      margin-bottom: 24px;
+      animation: fadeDown 0.6s ease both;
+    }
+    .hero h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(32px, 6vw, 64px);
+      font-weight: 800; line-height: 1.1;
+      letter-spacing: -2px;
+      animation: fadeDown 0.6s 0.1s ease both;
+    }
+    .hero h1 em {
+      font-style: normal;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .hero p {
+      margin: 20px auto 0;
+      max-width: 560px;
+      font-size: 17px; color: var(--text-muted); line-height: 1.7;
+      animation: fadeDown 0.6s 0.2s ease both;
+    }
+
+    /* TABS */
+    .tabs {
+      position: relative; z-index: 1;
+      display: flex; gap: 8px; justify-content: center; flex-wrap: wrap;
+      padding: 0 20px 40px;
+      animation: fadeDown 0.6s 0.3s ease both;
+    }
+    .tab-btn {
+      padding: 10px 22px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: var(--surface);
+      color: var(--text-muted);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px; font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .tab-btn:hover { border-color: var(--accent); color: var(--text); }
+    .tab-btn.active {
+      background: rgba(0,229,255,0.1);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+    .tab-btn .icon { font-size: 16px; }
+
+    /* MAIN LAYOUT */
+    .main {
+      position: relative; z-index: 1;
+      max-width: 1100px; margin: 0 auto;
+      padding: 0 20px 80px;
+      display: grid; grid-template-columns: 1fr 400px; gap: 24px;
+    }
+    @media (max-width: 900px) {
+      .main { grid-template-columns: 1fr; }
+    }
+
+    /* PANELS */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .panel-header {
+      display: flex; align-items: center; gap: 10px;
+      padding: 18px 24px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+    }
+    .panel-header h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 15px; font-weight: 700;
+    }
+    .panel-dot {
+      width: 8px; height: 8px; border-radius: 50%;
+      background: var(--accent); flex-shrink: 0;
+      box-shadow: 0 0 8px var(--accent);
+      animation: pulse 2s infinite;
+    }
+
+    /* INPUT SECTION */
+    .input-section { display: none; }
+    .input-section.active { display: block; }
+
+    .form-group { padding: 20px 24px; border-bottom: 1px solid var(--border); }
+    .form-group label {
+      display: block;
+      font-size: 12px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--text-muted);
+      margin-bottom: 10px;
+    }
+    .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    .input-field {
+      width: 100%;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 12px 16px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif;
+      font-size: 14px;
+      transition: border-color 0.2s;
+      outline: none;
+    }
+    .input-field:focus { border-color: var(--accent); }
+    .input-field::placeholder { color: var(--text-muted); }
+
+    select.input-field option { background: var(--surface); }
+
+    .btn-primary {
+      display: flex; align-items: center; justify-content: center; gap: 10px;
+      width: calc(100% - 48px); margin: 20px 24px;
+      padding: 14px 24px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none; border-radius: 12px;
+      color: #fff; font-family: 'Syne', sans-serif;
+      font-size: 15px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s;
+      letter-spacing: 0.5px;
+    }
+    .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 30px rgba(0,229,255,0.2); }
+    .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* RESULT */
+    .result-panel {
+      display: flex; flex-direction: column;
+    }
+    .result-body {
+      padding: 24px;
+      flex: 1;
+      min-height: 300px;
+    }
+    .placeholder-state {
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+      height: 260px; text-align: center; gap: 16px;
+    }
+    .placeholder-icon { font-size: 48px; opacity: 0.3; }
+    .placeholder-text { color: var(--text-muted); font-size: 14px; line-height: 1.6; }
+
+    .loading-state {
+      display: none;
+      flex-direction: column; align-items: center; justify-content: center;
+      height: 260px; gap: 20px;
+    }
+    .spinner {
+      width: 40px; height: 40px;
+      border: 3px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    .loading-text { color: var(--text-muted); font-size: 14px; }
+
+    .result-content { display: none; }
+    .result-content.show { display: block; }
+
+    .result-item {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 16px;
+      margin-bottom: 12px;
+    }
+    .result-item-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .result-item-label {
+      font-size: 11px; font-weight: 600; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--text-muted);
+    }
+    .result-item-badge {
+      font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px;
+    }
+    .badge-green { background: rgba(16,185,129,0.15); color: var(--accent3); }
+    .badge-blue { background: rgba(0,229,255,0.1); color: var(--accent); }
+    .badge-purple { background: rgba(124,58,237,0.15); color: #a78bfa; }
+    .badge-yellow { background: rgba(245,158,11,0.15); color: var(--warning); }
+
+    .result-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 28px; font-weight: 800;
+      color: var(--text);
+    }
+    .result-sub { font-size: 13px; color: var(--text-muted); margin-top: 4px; }
+
+    .result-text {
+      font-size: 14px; line-height: 1.7; color: var(--text);
+    }
+    .result-text strong { color: var(--accent); }
+
+    /* RIGHT SIDEBAR */
+    .sidebar { display: flex; flex-direction: column; gap: 16px; }
+
+    .stat-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      transition: border-color 0.2s;
+    }
+    .stat-card:hover { border-color: rgba(0,229,255,0.3); }
+    .stat-card-top {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 14px;
+    }
+    .stat-card-icon {
+      width: 40px; height: 40px; border-radius: 10px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 20px;
+    }
+    .icon-green { background: rgba(16,185,129,0.15); }
+    .icon-blue { background: rgba(0,229,255,0.1); }
+    .icon-purple { background: rgba(124,58,237,0.15); }
+    .icon-yellow { background: rgba(245,158,11,0.15); }
+
+    .stat-change {
+      font-size: 12px; font-weight: 600;
+      padding: 3px 8px; border-radius: 6px;
+    }
+    .up { background: rgba(16,185,129,0.15); color: var(--accent3); }
+    .down { background: rgba(239,68,68,0.15); color: var(--danger); }
+
+    .stat-label { font-size: 12px; color: var(--text-muted); margin-bottom: 6px; }
+    .stat-value {
+      font-family: 'Syne', sans-serif;
+      font-size: 26px; font-weight: 800;
+    }
+
+    /* QUICK TOOLS */
+    .quick-tools {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px; overflow: hidden;
+    }
+    .quick-tools-header {
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+      font-family: 'Syne', sans-serif; font-size: 13px; font-weight: 700;
+      color: var(--text-muted); text-transform: uppercase; letter-spacing: 1px;
+    }
+    .quick-tool-btn {
+      display: flex; align-items: center; gap: 12px;
+      width: 100%; padding: 14px 20px;
+      border: none; background: transparent;
+      color: var(--text); font-family: 'DM Sans', sans-serif;
+      font-size: 14px; cursor: pointer;
+      transition: background 0.15s;
+      border-bottom: 1px solid var(--border);
+      text-align: left;
+    }
+    .quick-tool-btn:last-child { border-bottom: none; }
+    .quick-tool-btn:hover { background: var(--surface2); }
+    .quick-tool-btn .qt-icon { font-size: 18px; width: 24px; text-align: center; }
+    .quick-tool-btn .qt-label { flex: 1; }
+    .quick-tool-btn .qt-arrow { color: var(--text-muted); font-size: 12px; }
+
+    /* CHAT INPUT */
+    .chat-panel { margin-top: 0; }
+    .chat-messages {
+      padding: 20px 24px;
+      min-height: 200px; max-height: 300px; overflow-y: auto;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .msg {
+      max-width: 85%;
+      padding: 12px 16px; border-radius: 12px;
+      font-size: 14px; line-height: 1.6;
+      animation: fadeIn 0.3s ease;
+    }
+    .msg-user {
+      align-self: flex-end;
+      background: rgba(0,229,255,0.1);
+      border: 1px solid rgba(0,229,255,0.2);
+      color: var(--text);
+    }
+    .msg-ai {
+      align-self: flex-start;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text);
+    }
+    .msg-ai-loading {
+      align-self: flex-start;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      color: var(--text-muted);
+      padding: 12px 16px; border-radius: 12px;
+      font-size: 14px;
+    }
+
+    .chat-input-row {
+      display: flex; gap: 10px;
+      padding: 16px 24px; border-top: 1px solid var(--border);
+    }
+    .chat-input {
+      flex: 1;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      padding: 10px 16px;
+      color: var(--text);
+      font-family: 'DM Sans', sans-serif; font-size: 14px;
+      outline: none; transition: border-color 0.2s;
+    }
+    .chat-input:focus { border-color: var(--accent); }
+    .chat-input::placeholder { color: var(--text-muted); }
+    .chat-send {
+      padding: 10px 18px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      border: none; border-radius: 10px;
+      color: #fff; font-family: 'Syne', sans-serif;
+      font-size: 13px; font-weight: 700;
+      cursor: pointer; transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .chat-send:hover { transform: translateY(-1px); }
+    .chat-send:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+    /* ANIMATIONS */
+    @keyframes fadeDown {
+      from { opacity: 0; transform: translateY(-16px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @keyframes pulse {
+      0%,100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.5; transform: scale(0.8); }
+    }
+
+    /* SCROLLBAR */
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg); }
+    ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  </style>
+</head>
+<body>
+
+<div class="blob blob-1"></div>
+<div class="blob blob-2"></div>
+
+<nav>
+  <div class="logo">МедФин<span>AI</span></div>
+  <div class="nav-badge">⚡ Эмнэлгийн AI Туслах</div>
+</nav>
+
+<section class="hero">
+  <div class="hero-tag">🏥 Эмнэлгийн Санхүү</div>
+  <h1>Нягтлан бодогчийн<br>ажлыг <em>AI-аар хялбарчил</em></h1>
+  <p>Цалин тооцоолол, даатгал, зардал, тайлан — бүгдийг хэдэн секундэд хийнэ</p>
+</section>
+
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('salary')" id="tab-salary">
+    <span class="icon">💰</span> Цалин тооцоолол
+  </button>
+  <button class="tab-btn" onclick="switchTab('insurance')" id="tab-insurance">
+    <span class="icon">🛡️</span> Даатгалын тооцоо
+  </button>
+  <button class="tab-btn" onclick="switchTab('expense')" id="tab-expense">
+    <span class="icon">📊</span> Зардлын шинжилгээ
+  </button>
+  <button class="tab-btn" onclick="switchTab('chat')" id="tab-chat">
+    <span class="icon">🤖</span> AI Зөвлөгөө
+  </button>
+</div>
+
+<div class="main">
+  <!-- LEFT: Tool Panel -->
+  <div>
+    <!-- SALARY -->
+    <div class="panel input-section active" id="section-salary">
+      <div class="panel-header">
+        <div class="panel-dot"></div>
+        <h3>Цалин & НД тооцоолол</h3>
+      </div>
+      <div class="form-group">
+        <label>Ажилтны мэдээлэл</label>
+        <div class="form-row">
+          <input class="input-field" type="text" id="emp-name" placeholder="Ажилтны нэр">
+          <select class="input-field" id="emp-role">
+            <option value="">Ажлын байр</option>
+            <option value="doctor">Эмч</option>
+            <option value="nurse">Сувилагч</option>
+            <option value="admin">Захиргаа</option>
+            <option value="lab">Лабораторийн мэргэжилтэн</option>
+            <option value="pharmacy">Эмийн сангийн ажилтан</option>
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Цалингийн дэлгэрэнгүй</label>
+        <div class="form-row">
+          <input class="input-field" type="number" id="base-salary" placeholder="Үндсэн цалин (₮)">
+          <input class="input-field" type="number" id="bonus" placeholder="Нэмэгдэл (₮)">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Ажлын цаг & нөхцөл</label>
+        <div class="form-row">
+          <input class="input-field" type="number" id="overtime" placeholder="Илүү цаг (ц)">
+          <select class="input-field" id="shift">
+            <option value="day">Өдрийн ээлж</option>
+            <option value="night">Шөнийн ээлж</option>
+            <option value="mixed">Хосолсон</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="calcSalary()" id="btn-salary">
+        ⚡ AI-аар тооцоолох
+      </button>
+
+      <!-- Result -->
+      <div style="padding: 0 24px 24px;" id="salary-result" class="result-content">
+        <div id="salary-loading" class="loading-state" style="height:120px;">
+          <div class="spinner"></div>
+          <div class="loading-text">Тооцоолж байна...</div>
+        </div>
+        <div id="salary-items"></div>
+      </div>
+    </div>
+
+    <!-- INSURANCE -->
+    <div class="panel input-section" id="section-insurance">
+      <div class="panel-header">
+        <div class="panel-dot"></div>
+        <h3>Даатгалын тооцоо & шалгалт</h3>
+      </div>
+      <div class="form-group">
+        <label>Өвчтөний мэдээлэл</label>
+        <div class="form-row">
+          <input class="input-field" type="text" id="patient-name" placeholder="Өвчтөний нэр">
+          <input class="input-field" type="text" id="insurance-no" placeholder="Даатгалын дугаар">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Үйлчилгээний мэдээлэл</label>
+        <div class="form-row">
+          <select class="input-field" id="service-type">
+            <option value="">Үйлчилгээний төрөл</option>
+            <option value="outpatient">Амбулаторийн үзлэг</option>
+            <option value="inpatient">Эмнэлэгт хэвтэн эмчлүүлэх</option>
+            <option value="surgery">Мэс ажилбар</option>
+            <option value="lab">Лабораторийн шинжилгээ</option>
+            <option value="xray">Оношилгоо (Рентген/MRI)</option>
+            <option value="pharma">Эм, эмчилгээ</option>
+          </select>
+          <input class="input-field" type="number" id="total-cost" placeholder="Нийт зардал (₮)">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Даатгалын хамрагдалт</label>
+        <div class="form-row">
+          <select class="input-field" id="insurance-type">
+            <option value="basic">Үндсэн даатгал (70%)</option>
+            <option value="extended">Өргөтгөсөн (85%)</option>
+            <option value="premium">Premium (95%)</option>
+            <option value="none">Даатгалгүй</option>
+          </select>
+          <input class="input-field" type="number" id="stay-days" placeholder="Хэвтсэн хоног">
+        </div>
+      </div>
+      <button class="btn-primary" onclick="calcInsurance()" id="btn-insurance">
+        ⚡ Тооцоолох
+      </button>
+      <div style="padding: 0 24px 24px;" id="insurance-result" class="result-content">
+        <div id="ins-items"></div>
+      </div>
+    </div>
+
+    <!-- EXPENSE -->
+    <div class="panel input-section" id="section-expense">
+      <div class="panel-header">
+        <div class="panel-dot"></div>
+        <h3>Зардлын шинжилгээ</h3>
+      </div>
+      <div class="form-group">
+        <label>Зардлын дэлгэрэнгүй</label>
+        <div class="form-row">
+          <input class="input-field" type="number" id="exp-medicine" placeholder="Эмийн зардал (₮)">
+          <input class="input-field" type="number" id="exp-equipment" placeholder="Тоног төхөөрөмж (₮)">
+        </div>
+        <div class="form-row" style="margin-top:12px;">
+          <input class="input-field" type="number" id="exp-staff" placeholder="Цалингийн зардал (₮)">
+          <input class="input-field" type="number" id="exp-utility" placeholder="Нийтийн үйлчилгээ (₮)">
+        </div>
+        <div class="form-row" style="margin-top:12px;">
+          <input class="input-field" type="number" id="exp-revenue" placeholder="Нийт орлого (₮)">
+          <select class="input-field" id="exp-month">
+            <option>1-р сар</option><option>2-р сар</option><option>3-р сар</option>
+            <option>4-р сар</option><option>5-р сар</option><option>6-р сар</option>
+            <option>7-р сар</option><option>8-р сар</option><option>9-р сар</option>
+            <option>10-р сар</option><option>11-р сар</option><option selected>12-р сар</option>
+          </select>
+        </div>
+      </div>
+      <button class="btn-primary" onclick="analyzeExpense()" id="btn-expense">
+        ⚡ AI шинжилгээ хийх
+      </button>
+      <div style="padding: 0 24px 24px;" id="expense-result" class="result-content">
+        <div id="exp-items"></div>
+      </div>
+    </div>
+
+    <!-- CHAT -->
+    <div class="panel input-section chat-panel" id="section-chat">
+      <div class="panel-header">
+        <div class="panel-dot"></div>
+        <h3>AI Санхүүгийн Зөвлөгч</h3>
+      </div>
+      <div class="chat-messages" id="chat-messages">
+        <div class="msg msg-ai">
+          Сайн байна уу! Би МедФин AI — эмнэлгийн санхүүгийн таны туслах. Татвар, тайлан, даатгал, цалин — дурын асуулт асуугаарай 🏥
+        </div>
+      </div>
+      <div class="chat-input-row">
+        <input class="chat-input" type="text" id="chat-input" placeholder="Жишээ: НДШ хэдэн хувь байдаг вэ?" onkeypress="if(event.key==='Enter') sendChat()">
+        <button class="chat-send" onclick="sendChat()" id="chat-btn">Илгээх →</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- RIGHT SIDEBAR -->
+  <div class="sidebar">
+    <div class="stat-card">
+      <div class="stat-card-top">
+        <div class="stat-card-icon icon-green">💹</div>
+        <div class="stat-change up">+12.4%</div>
+      </div>
+      <div class="stat-label">Энэ сарын орлого</div>
+      <div class="stat-value">₮48.2M</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-top">
+        <div class="stat-card-icon icon-blue">👥</div>
+        <div class="stat-change up">+3</div>
+      </div>
+      <div class="stat-label">Нийт ажилтан</div>
+      <div class="stat-value">127</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-top">
+        <div class="stat-card-icon icon-purple">🛡️</div>
+        <div class="stat-change down">-2.1%</div>
+      </div>
+      <div class="stat-label">Даатгалын нэхэмжлэл</div>
+      <div class="stat-value">₮18.7M</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card-top">
+        <div class="stat-card-icon icon-yellow">📋</div>
+        <div class="stat-change up">✓</div>
+      </div>
+      <div class="stat-label">Татварын тайлан</div>
+      <div class="stat-value">Бэлэн</div>
+    </div>
+
+    <div class="quick-tools">
+      <div class="quick-tools-header">Хурдан Хэрэгсэл</div>
+      <button class="quick-tool-btn" onclick="quickFill('salary')">
+        <span class="qt-icon">💰</span>
+        <span class="qt-label">Жишээ цалин тооцоолол</span>
+        <span class="qt-arrow">→</span>
+      </button>
+      <button class="quick-tool-btn" onclick="quickFill('insurance')">
+        <span class="qt-icon">🛡️</span>
+        <span class="qt-label">Жишээ даатгал</span>
+        <span class="qt-arrow">→</span>
+      </button>
+      <button class="quick-tool-btn" onclick="quickFill('expense')">
+        <span class="qt-icon">📊</span>
+        <span class="qt-label">Жишээ зардал</span>
+        <span class="qt-arrow">→</span>
+      </button>
+      <button class="quick-tool-btn" onclick="switchTab('chat'); setTimeout(()=>{document.getElementById('chat-input').value='НДШ тооцоолох томьёог тайлбарлаач'; sendChat();},300)">
+        <span class="qt-icon">🤖</span>
+        <span class="qt-label">НДШ тайлбар</span>
+        <span class="qt-arrow">→</span>
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+const ANTHROPIC_URL = "https://api.anthropic.com/v1/messages";
+
+function fmt(n) {
+  return '₮' + Number(n).toLocaleString('mn-MN');
+}
+
+// TAB SWITCH
+function switchTab(tab) {
+  document.querySelectorAll('.input-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('section-' + tab).classList.add('active');
+  document.getElementById('tab-' + tab).classList.add('active');
+}
+
+// QUICK FILL
+function quickFill(type) {
+  switchTab(type);
+  if (type === 'salary') {
+    document.getElementById('emp-name').value = 'Б.Мөнхбат';
+    document.getElementById('emp-role').value = 'doctor';
+    document.getElementById('base-salary').value = '2500000';
+    document.getElementById('bonus').value = '300000';
+    document.getElementById('overtime').value = '12';
+    document.getElementById('shift').value = 'night';
+    calcSalary();
+  } else if (type === 'insurance') {
+    document.getElementById('patient-name').value = 'Д.Оюунчимэг';
+    document.getElementById('insurance-no').value = 'НД-2024-58921';
+    document.getElementById('service-type').value = 'surgery';
+    document.getElementById('total-cost').value = '4500000';
+    document.getElementById('insurance-type').value = 'extended';
+    document.getElementById('stay-days').value = '5';
+    calcInsurance();
+  } else if (type === 'expense') {
+    document.getElementById('exp-medicine').value = '8500000';
+    document.getElementById('exp-equipment').value = '3200000';
+    document.getElementById('exp-staff').value = '18000000';
+    document.getElementById('exp-utility').value = '2100000';
+    document.getElementById('exp-revenue').value = '48200000';
+    analyzeExpense();
+  }
+}
+
+// SALARY CALC
+async function calcSalary() {
+  const name = document.getElementById('emp-name').value || 'Ажилтан';
+  const role = document.getElementById('emp-role').value || 'doctor';
+  const base = parseFloat(document.getElementById('base-salary').value) || 2500000;
+  const bonus = parseFloat(document.getElementById('bonus').value) || 0;
+  const overtime = parseFloat(document.getElementById('overtime').value) || 0;
+  const shift = document.getElementById('shift').value;
+
+  const nightBonus = shift === 'night' ? base * 0.15 : shift === 'mixed' ? base * 0.08 : 0;
+  const overtimePay = overtime * (base / 176) * 1.5;
+  const gross = base + bonus + nightBonus + overtimePay;
+  const nds = gross * 0.11;
+  const hds = gross * 0.02;
+  const tax = gross > 1800000 ? (gross - 1800000) * 0.2 : 0;
+  const net = gross - nds - hds - tax;
+  const empNds = gross * 0.11;
+  const empHds = gross * 0.02;
+
+  const resultEl = document.getElementById('salary-result');
+  const itemsEl = document.getElementById('salary-items');
+  const loadEl = document.getElementById('salary-loading');
+
+  resultEl.classList.add('show');
+  loadEl.style.display = 'flex';
+  itemsEl.innerHTML = '';
+
+  // AI summary
+  const prompt = `Та эмнэлгийн нягтлан бодогчийн AI туслах юм. Монгол хэлээр товч, тодорхой хариул.
+Ажилтан: ${name}, Үүрэг: ${role}, Үндсэн цалин: ${fmt(base)}, Нийт олговор: ${fmt(gross)}, Гарт олгох: ${fmt(net)}.
+2-3 өгүүлбэрээр: энэ цалингийн онцлог, анхаарах зүйл, зөвлөмж өг.`;
+
+  let aiText = '';
+  try {
+    const res = await fetch(ANTHROPIC_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    aiText = data.content?.[0]?.text || '';
+  } catch(e) {}
+
+  loadEl.style.display = 'none';
+
+  itemsEl.innerHTML = `
+    <div class="result-item">
+      <div class="result-item-header">
+        <div class="result-item-label">Гарт олгох цалин</div>
+        <div class="result-item-badge badge-green">✓ Тооцоологдсон</div>
+      </div>
+      <div class="result-value">${fmt(Math.round(net))}</div>
+      <div class="result-sub">Нийт олговор: ${fmt(Math.round(gross))}</div>
+    </div>
+    <div class="result-item">
+      <div class="result-item-header">
+        <div class="result-item-label">Суутгалын дэлгэрэнгүй</div>
+        <div class="result-item-badge badge-blue">НД & Татвар</div>
+      </div>
+      <div class="result-text">
+        <strong>НДШ (11%):</strong> ${fmt(Math.round(nds))}<br>
+        <strong>ХДШ (2%):</strong> ${fmt(Math.round(hds))}<br>
+        <strong>ААНОАТ:</strong> ${fmt(Math.round(tax))}<br>
+        ${nightBonus > 0 ? `<strong>Шөнийн нэмэгдэл:</strong> ${fmt(Math.round(nightBonus))}<br>` : ''}
+        ${overtimePay > 0 ? `<strong>Илүү цагийн нэмэгдэл:</strong> ${fmt(Math.round(overtimePay))}<br>` : ''}
+      </div>
+    </div>
+    <div class="result-item">
+      <div class="result-item-header">
+        <div class="result-item-label">Ажил олгогчийн зардал</div>
+        <div class="result-item-badge badge-purple">Нэмэлт</div>
+      </div>
+      <div class="result-text">
+        <strong>НДШ (11%):</strong> ${fmt(Math.round(empNds))}<br>
+        <strong>ХДШ (2%):</strong> ${fmt(Math.round(empHds))}<br>
+        <strong>Нийт зардал:</strong> ${fmt(Math.round(gross + empNds + empHds))}
+      </div>
+    </div>
+    ${aiText ? `<div class="result-item">
+      <div class="result-item-header">
+        <div class="result-item-label">AI Зөвлөмж</div>
+        <div class="result-item-badge badge-yellow">🤖 AI</div>
+      </div>
+      <div class="result-text">${aiText}</div>
+    </div>` : ''}
+  `;
+}
+
+// INSURANCE CALC
+async function calcInsurance() {
+  const total = parseFloat(document.getElementById('total-cost').value) || 0;
+  const insType = document.getElementById('insurance-type').value;
+  const serviceType = document.getElementById('service-type').value || 'outpatient';
+  const days = parseInt(document.getElementById('stay-days').value) || 0;
+
+  const rates = { basic: 0.70, extended: 0.85, premium: 0.95, none: 0 };
+  const rate = rates[insType];
+  const covered = total * rate;
+  const patient = total - covered;
+  const dailyRate = days > 0 ? 55000 : 0;
+  const bedCost = dailyRate * days;
+
+  const resultEl = document.getElementById('insurance-result');
+  const itemsEl = document.getElementById('ins-items');
+  resultEl.classList.add('show');
+  itemsEl.innerHTML = `
+    <div class="result-item">
+      <div class="result-item-header">
+        <div class="result-item-label">Даатгалаас нөхөн олгох</div>
+        <div class="result-item-badge badge-green">${(rate*100).toFixed(0)}% хамрагдалт</div>
+      </div>
+      <div class="result-value">${fmt(Math.round(covered))}</div>
+      <div class="result-sub">Өвчтөний төлөх дүн: ${fmt(Math.round(patient))}</div>
+    </div>
+    <div class="result-item">
+      <div class="result-item-header">
+        <div class="result-item-label">Зардлын задаргаа</div>
+        <div class="result-item-badge badge-blue">Дэлгэрэнгүй</div>
+      </div>
+      <div class="result-text">
+        <strong>Нийт зардал:</strong> ${fmt(total)}<br>
+        <strong>Даатгал хариуцах:</strong> ${fmt(Math.round(covered))}<br>
+        <strong>Өвчтөн хариуцах:</strong> ${fmt(Math.round(patient))}<br>
+        ${days > 0 ? `<strong>Орны хоног (${days} хоног):</strong> ${fmt(bedCost)}<br>` : ''}
+      </div>
+    </div>
+    <div class="result-item">
+      <div class="result-item-header">
+        <div class="result-item-label">Нэхэмжлэлийн статус</div>
+        <div class="result-item-badge badge-yellow">⏳ Хүлээгдэж байна</div>
+      </div>
+      <div class="result-text">
+        Даатгалын компанид илгээх дүн: <strong>${fmt(Math.round(covered))}</strong><br>
+        Боловсруулах хугацаа: <strong>3-5 ажлын өдөр</strong>
+      </div>
+    </div>
+  `;
+}
+
+// EXPENSE ANALYSIS
+async function analyzeExpense() {
+  const medicine = parseFloat(document.getElementById('exp-medicine').value) || 0;
+  const equipment = parseFloat(document.getElementById('exp-equipment').value) || 0;
+  const staff = parseFloat(document.getElementById('exp-staff').value) || 0;
+  const utility = parseFloat(document.getElementById('exp-utility').value) || 0;
+  const revenue = parseFloat(document.getElementById('exp-revenue').value) || 0;
+
+  const totalExp = medicine + equipment + staff + utility;
+  const profit = revenue - totalExp;
+  const margin = revenue > 0 ? (profit / revenue * 100).toFixed(1) : 0;
+
+  const resultEl = document.getElementById('expense-result');
+  const itemsEl = document.getElementById('exp-items');
+  resultEl.classList.add('show');
+
+  itemsEl.innerHTML = `<div style="display:flex;align-items:center;gap:10px;padding:12px 0;color:var(--text-muted);font-size:14px;"><div class="spinner" style="width:24px;height:24px;border-width:2px;"></div> AI шинжилж байна...</div>`;
+
+  const prompt = `Монгол эмнэлгийн санхүүгийн шинжилгээ хий. Зөвхөн Монгол хэлээр хариул.
+Орлого: ${fmt(revenue)}, Нийт зардал: ${fmt(totalExp)}, Ашиг/Алдагдал: ${fmt(profit)}, Ашгийн хувь: ${margin}%
+Зардлын бүтэц: Эм: ${fmt(medicine)}, Тоног: ${fmt(equipment)}, Цалин: ${fmt(staff)}, Нийтийн: ${fmt(utility)}
+3-4 цэгт товч дүгнэлт, зөвлөмж өг. HTML биш, энгийн текст.`;
+
+  let aiText = 'Шинжилгээ боломжгүй байна.';
+  try {
+    const res = await fetch(ANTHROPIC_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        messages: [{ role: 'user', content: prompt }]
+      })
+    });
+    const data = await res.json();
+    aiText = data.content?.[0]?.text || aiText;
+  } catch(e) {}
+
+  const isProfit = profit >= 0;
+  itemsEl.innerHTML = `
+    <div class="result-item">
+      <div class="result-item-header">
+        <div class="result-item-label">Санхүүгийн үр дүн</div>
+        <div class="result-item-badge ${isProfit ? 'badge-green' : 'badge-yellow'}">${isProfit ? '📈 Ашигтай' : '📉 Алдагдалтай'}</div>
+      </div>
+      <div class="result-value" style="color:${isProfit ? 'var(--accent3)' : 'var(--danger)'}">${isProfit ? '+' : ''}${fmt(Math.round(profit))}</div>
+      <div class="result-sub">Ашгийн маржин: ${margin}%</div>
+    </div>
+    <div class="result-item">
+      <div class="result-item-header">
+        <div class="result-item-label">Зардлын бүтэц</div>
+        <div class="result-item-badge badge-blue">Задаргаа</div>
+      </div>
+      <div class="result-text">
+        <strong>💊 Эм, эмчилгээ:</strong> ${fmt(medicine)} (${revenue>0?(medicine/totalExp*100).toFixed(0):0}%)<br>
+        <strong>🔧 Тоног төхөөрөмж:</strong> ${fmt(equipment)} (${revenue>0?(equipment/totalExp*100).toFixed(0):0}%)<br>
+        <strong>👥 Цалин хөлс:</strong> ${fmt(staff)} (${revenue>0?(staff/totalExp*100).toFixed(0):0}%)<br>
+        <strong>💡 Нийтийн үйлчилгээ:</strong> ${fmt(utility)} (${revenue>0?(utility/totalExp*100).toFixed(0):0}%)
+      </div>
+    </div>
+    <div class="result-item">
+      <div class="result-item-header">
+        <div class="result-item-label">AI Шинжилгээ</div>
+        <div class="result-item-badge badge-purple">🤖 AI Зөвлөмж</div>
+      </div>
+      <div class="result-text">${aiText.replace(/\n/g, '<br>')}</div>
+    </div>
+  `;
+}
+
+// CHAT
+const chatHistory = [];
+async function sendChat() {
+  const input = document.getElementById('chat-input');
+  const btn = document.getElementById('chat-btn');
+  const msg = input.value.trim();
+  if (!msg) return;
+
+  const messages = document.getElementById('chat-messages');
+  messages.innerHTML += `<div class="msg msg-user">${msg}</div>`;
+  const loadEl = document.createElement('div');
+  loadEl.className = 'msg-ai-loading';
+  loadEl.innerHTML = '⏳ Бодож байна...';
+  messages.appendChild(loadEl);
+  messages.scrollTop = messages.scrollHeight;
+
+  input.value = '';
+  btn.disabled = true;
+
+  chatHistory.push({ role: 'user', content: msg });
+
+  try {
+    const res = await fetch(ANTHROPIC_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        model: 'claude-sonnet-4-20250514',
+        max_tokens: 1000,
+        system: 'Та Монгол эмнэлгийн нягтлан бодогчийн AI туслах юм. Монгол хэлээр богино, тодорхой, практик хариул өг. Татвар, НДШ, ХДШ, даатгал, цалин, санхүүгийн тайлан, Монгол хуулийн дагуу зөвлөгөө өг.',
+        messages: chatHistory
+      })
+    });
+    const data = await res.json();
+    const reply = data.content?.[0]?.text || 'Алдаа гарлаа. Дахин оролдоно уу.';
+    chatHistory.push({ role: 'assistant', content: reply });
+    loadEl.className = 'msg msg-ai';
+    loadEl.innerHTML = reply.replace(/\n/g, '<br>');
+  } catch(e) {
+    loadEl.className = 'msg msg-ai';
+    loadEl.innerHTML = '⚠️ Холболтын алдаа гарлаа.';
+  }
+
+  btn.disabled = false;
+  messages.scrollTop = messages.scrollHeight;
+}
+</script>
+</body>
+</html>
